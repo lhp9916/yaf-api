@@ -81,15 +81,72 @@ class ArtController extends Yaf_Controller_Abstract
 
     public function delAction()
     {
-
+        if (!$this->_isAdmin()) {
+            echo json_encode([
+                "errno" => -2000,
+                "errmsg" => "需要管理员权限才能操作"
+            ]);
+            return false;
+        }
+        $artId = $this->getRequest()->getQuery("artId", "0");
+        if (is_numeric($artId) && $artId) {
+            $model = new ArtModel();
+            if ($model->del($artId)) {
+                echo json_encode([
+                    "errno" => 0,
+                    "errmsg" => ""
+                ]);
+            } else {
+                echo json_encode([
+                    "errno" => $model->errno,
+                    "errmsg" => $model->errmsg
+                ]);
+            }
+        } else {
+            echo json_encode([
+                "errno" => -2003,
+                "errmsg" => "缺少必要的文章ID参数"
+            ]);
+        }
+        return false;
     }
 
     /**
-     * 获取文章状态
+     * 修改文章状态
      */
     public function statusAction()
     {
+        if (!$this->_isAdmin()) {
+            echo json_encode([
+                "errno" => -2000,
+                "errmsg" => "需要管理员权限才能操作"
+            ]);
+            return false;
+        }
+        $artId = $this->getRequest()->getQuery("artId", "0");
+        $status = $this->getRequest()->getQuery("status", "offline");
 
+        if (is_numeric($artId) && $artId) {
+            $model = new ArtModel();
+            if ($model->status($artId, $status)) {
+                echo json_encode([
+                    "errno" => 0,
+                    "errmsg" => ""
+                ]);
+            } else {
+                echo json_encode([
+                    "errno" => $model->errno,
+                    "errmsg" => $model->errmsg
+                ]);
+            }
+        } else {
+            echo json_encode([
+                "errno" => -2003,
+                "errmsg" => "缺少必要的文章ID参数"
+            ]);
+        }
+
+        return false;
     }
 
     /**
@@ -97,7 +154,29 @@ class ArtController extends Yaf_Controller_Abstract
      */
     public function getAction()
     {
+        $artId = $this->getRequest()->getQuery("artId", "0");
 
+        if (is_numeric($artId) && $artId) {
+            $model = new ArtModel();
+            if ($data = $model->get($artId)) {
+                echo json_encode([
+                    "errno" => 0,
+                    "errmsg" => "",
+                    "data" => $data
+                ]);
+            } else {
+                echo json_encode([
+                    "errno" => -2009,
+                    "errmsg" => "获取文章信息失败"
+                ]);
+            }
+        } else {
+            echo json_encode([
+                "errno" => -2003,
+                "errmsg" => "缺少必要的文章ID参数"
+            ]);
+        }
+        return false;
     }
 
     public function listAction()

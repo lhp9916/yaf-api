@@ -68,4 +68,77 @@ class ArtModel
         }
     }
 
+    /**
+     * 删除文章(删除数据)
+     * @param $artId
+     * @return bool
+     */
+    public function del($artId)
+    {
+        $query = $this->_db->prepare("delete from `art` WHERE `id`=? ");
+        $ret = $query->execute([intval($artId)]);
+        if (!$ret) {
+            $this->errno = -2007;
+            $this->errmsg = "删除失败，errInfo:" . end($query->errorInfo());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param $artId
+     * @param string $status
+     * delete 删除
+     * online 上线
+     * offline 未上线
+     * @return bool
+     */
+    public function status($artId, $status = 'offline')
+    {
+        $query = $this->_db->prepare("update `art` set `status`=?,`mtime`=? WHERE `id`=? ");
+        $ret = $query->execute([$status, date("Y-m-d H:i:s"), intval($artId)]);
+        if (!$ret) {
+            $this->errno = -2008;
+            $this->errmsg = "更新文章状态失败，errInfo:" . end($query->errorInfo());
+            return false;
+        }
+        return true;
+    }
+
+    public function get($artId)
+    {
+        $query = $this->_db->prepare("select `title`,`contents`,`author`,`cate`,`ctime`,`mtime`,`status` from `art` WHERE `id`=? ");
+        $status = $query->execute([intval($artId)]);
+        $ret = $query->fetchAll();
+        if (!$status || !$ret) {
+            $this->errno = -2009;
+            $this->errmsg = "查询失败，errInfo:" . end($query->errorInfo());
+            return false;
+        }
+        $artInfo = $ret[0];
+
+        //获取分类信息
+        $query = $this->_db->prepare("select `name` from `cate` WHERE `id`=? ");
+        $query->execute([$artInfo['cate']]);
+        $ret = $query->fetchAll();
+        if (!$ret) {
+            $this->errno = -2010;
+            $this->errmsg = "获取分类信息失败，errInfo:" . end($query->errorInfo());
+            return false;
+        }
+        $artInfo['cateName'] = $ret[0]['name'];
+        $data = [
+            'id' => intval($artId),
+            'title' => $artInfo['title'],
+            'contents' => $artInfo['contents'],
+            'author' => $artInfo['author'],
+            'cateName' => $artInfo['cateName'],
+            'cateId' => intval($artInfo['cate']),
+            'ctime' => $artInfo['ctime'],
+            'mtime' => $artInfo['mtime'],
+            'status' => $artInfo['status']
+        ];
+        return $data;
+    }
+
 }
