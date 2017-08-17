@@ -141,4 +141,55 @@ class ArtModel
         return $data;
     }
 
+    public function list($pageNo = 0, $pageSize = 10, $cate = 0, $status = 'online')
+    {
+        $start = $pageNo * $pageSize + ($pageNo == 0 ? 0 : 1);
+        if ($cate == 0) {
+            $filter = [$status, intval($start), intval($pageSize)];
+            $query = $this->_db->prepare("select `id`,`title`,`contents`,`author`,`cate`,`ctime`,`mtime`,`status` from `art` WHERE `status`=? ORDER BY `ctime` DESC limit ?,? ");
+        } else {
+            $filter = [intval($cate), $status, intval($start), intval($pageSize)];
+            $query = $this->_db->prepare("select `id`,`title`,`contents`,`author`,`cate`,`ctime`,`mtime`,`status` from `art` WHERE `cate`=? AND `status`=? ORDER BY `ctime` DESC limit ?,? ");
+        }
+        $query->execute($filter);
+        $ret = $query->fetchAll();
+        if (!$ret) {
+            $this->errno = -2011;
+            $this->errmsg = "获取文章列表失败，errInfo:" . end($query->errorInfo());
+            return false;
+        }
+
+        $data = array();
+        $cateInfo = array();
+        foreach ($ret as $item) {
+            if (isset($cateInfo[$item['cate']])) {
+                $cateName = $cateInfo[$item['cate']];
+            } else {
+                $query = $this->_db->prepare("select `name` from `cate` WHERE `id`=? ");
+                $query->execute([$item['cate']]);
+                $retCat = $query->fetchAll();
+                if (!$retCat) {
+                    $this->errno = -2010;
+                    $this->errmsg = "获取分类信息失败，errInfo:" . end($query->errorInfo());
+                    return false;
+                }
+                $cateName = $cateInfo[$item['cate']] = $retCat[0]['name'];
+            }
+
+            //正文太长则切割
+            $contents = mb_strlen($item['contents']) > 30 ? mb_substr($item['contents'], 0, 30) : $item['contents'];
+            $data[] = [
+                'id' => intval($item['id']),
+                'title' => $item['title'],
+                'contents' => $contents,
+                'author' => $item['author'],
+                'cate' => $item['cate'],
+                'cateName' => $cateName,
+                'ctime' => $item['ctime'],
+                'mtime' => $item['mtime'],
+                'status' => $item['status']
+            ];
+        }
+        return $data;
+    }
 }
