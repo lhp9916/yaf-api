@@ -48,6 +48,15 @@ class SmsModel
         $result = $this->sms->send($mobile, $contentParam, $template);
 
         if ($result['stat'] == '100') {
+            //记录发送短信
+            $query = $this->_db->prepare("insert into sms_record(`uid`,`contents`,`template`) VALUES (?,?,?)");
+            $ret = $query->execute([$uid, json_encode($contentParam), $template]);
+            if (!$ret) {
+                $this->errno = -4006;
+                $this->errmsg = "消息发送成功，但发送记录失败。";
+                return false;
+            }
+
             return true;
         } else {
             $this->errno = -4005;
