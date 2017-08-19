@@ -20,8 +20,7 @@ class UserModel
             return false;
         }
         if (strlen($pwd) < 8) {
-            $this->errno = -1006;
-            $this->errmsg = "密码至少为8位";
+            list($this->errno, $this->errmsg) = Err_Map::get(1006);
             return false;
         } else {
             $password = Common_Password::pwdEncode($pwd);
@@ -44,8 +43,7 @@ class UserModel
             return false;
         }
         if (Common_Password::pwdEncode($pwd) != $userInfo['pwd']) {
-            $this->errno = -1004;
-            $this->errmsg = "密码错误";
+            list($this->errno, $this->errmsg) = Err_Map::get(1004);
             return false;
         }
         return intval($userInfo[1]);

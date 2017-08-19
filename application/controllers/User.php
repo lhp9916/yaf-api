@@ -16,7 +16,7 @@ class UserController extends Yaf_Controller_Abstract
     {
         $submit = Common_Request::getRequest("submit", '0');
         if ($submit != "1") {
-            echo Common_Request::responce(-1001, "请通过正确渠道提交");
+            echo json_encode(Err_Map::get(1001));
             return false;
         }
 
@@ -24,7 +24,7 @@ class UserController extends Yaf_Controller_Abstract
         $uname = Common_Request::postRequest('uname', false);
         $pwd = Common_Request::postRequest('pwd', false);
         if (!$uname || !$pwd) {
-            echo Common_Request::responce(-1002, '用户名与密码必须传递');
+            echo json_encode(Err_Map::get(1002));
             return false;
         }
 
@@ -54,7 +54,7 @@ class UserController extends Yaf_Controller_Abstract
         $uname = Common_Request::postRequest('uname', false);
         $pwd = Common_Request::postRequest('pwd', false);
         if (!$uname || !$pwd) {
-            echo Common_Request::responce(-1002, "用户名与密码必须传递");
+            echo json_encode(Err_Map::get(1002));
             return false;
         }
 
