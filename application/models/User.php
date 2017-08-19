@@ -4,22 +4,19 @@ class UserModel
 {
     public $errno = 0;
     public $errmsg = "";
-    private $_db = null;
+    private $_dao = null;
 
     public function __construct()
     {
-        $this->_db = new PDO("mysql:host=127.0.0.1;dbname=yaf_api;", "root", "root");
+        $this->_dao = new Db_User();
     }
 
     public function register($uname, $pwd)
     {
-        $query = $this->_db->prepare("select count(*) as c from `user` WHERE `name`= ? ");
-        $query->execute([$uname]);
-        $count = $query->fetchAll();
-        // 检查用户是否存在
-        if ($count[0]['c'] != 0) {
-            $this->errno = -1005;
-            $this->errmsg = "用户已存在";
+        $exist = $this->_dao->checkExist($uname);
+        if (!$exist) {
+            $this->errno = $this->_dao->errno();
+            $this->errmsg = $this->_dao->errmsg();
             return false;
         }
         if (strlen($pwd) < 8) {
@@ -30,11 +27,9 @@ class UserModel
             $password = Common_Password::pwdEncode($pwd);
         }
 
-        $query = $this->_db->prepare("insert into `user`(`name`,`pwd`,`reg_time`) VALUES (?,?,?) ");
-        $ret = $query->execute([$uname, $password, date("Y-m-d H:i:s")]);
-        if (!$ret) {
-            $this->errno = -1006;
-            $this->errmsg = "注册失败，写入数据失败";
+        if (!$this->_dao->addUser($uname, $password)) {
+            $this->errno = $this->_dao->errno();
+            $this->errmsg = $this->_dao->errmsg();
             return false;
         }
         return true;
@@ -42,15 +37,12 @@ class UserModel
 
     public function login($username, $pwd)
     {
-        $query = $this->_db->prepare("select `pwd`,`id` from  `user` WHERE `name`=? ");
-        $query->execute([$username]);
-        $ret = $query->fetchAll();
-        if (!$ret || count($ret) != 1) {
-            $this->errno = -1003;
-            $this->errmsg = "用户查找失败";
+        $userInfo = $this->_dao->find($username);
+        if (!$userInfo) {
+            $this->errno = $this->_dao->errno();
+            $this->errmsg = $this->_dao->errmsg();
             return false;
         }
-        $userInfo = $ret[0];
         if (Common_Password::pwdEncode($pwd) != $userInfo['pwd']) {
             $this->errno = -1004;
             $this->errmsg = "密码错误";
