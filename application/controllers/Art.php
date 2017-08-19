@@ -14,7 +14,7 @@ class ArtController extends Yaf_Controller_Abstract
 
     public function addAction($artId = 0)
     {
-        if (!$this->_isAdmin()) {
+        if (!Admin_Object::isAdmin()) {
             echo json_encode([
                 "errno" => -2000,
                 "errmsg" => "需要管理员权限才能操作"
@@ -60,7 +60,7 @@ class ArtController extends Yaf_Controller_Abstract
 
     public function editAction()
     {
-        if (!$this->_isAdmin()) {
+        if (!Admin_Object::isAdmin()) {
             echo json_encode([
                 "errno" => -2000,
                 "errmsg" => "需要管理员权限才能操作"
@@ -81,7 +81,7 @@ class ArtController extends Yaf_Controller_Abstract
 
     public function delAction()
     {
-        if (!$this->_isAdmin()) {
+        if (!Admin_Object::isAdmin()) {
             echo json_encode([
                 "errno" => -2000,
                 "errmsg" => "需要管理员权限才能操作"
@@ -116,7 +116,7 @@ class ArtController extends Yaf_Controller_Abstract
      */
     public function statusAction()
     {
-        if (!$this->_isAdmin()) {
+        if (!Admin_Object::isAdmin()) {
             echo json_encode([
                 "errno" => -2000,
                 "errmsg" => "需要管理员权限才能操作"
@@ -202,9 +202,4 @@ class ArtController extends Yaf_Controller_Abstract
         return false;
     }
 
-    private function _isAdmin()
-    {
-        //todo
-        return true;
-    }
 }
