@@ -27,7 +27,7 @@ class UserModel
             $this->errmsg = "密码至少为8位";
             return false;
         } else {
-            $password = $this->_password_generate($pwd);
+            $password = Common_Password::pwdEncode($pwd);
         }
 
         $query = $this->_db->prepare("insert into `user`(`name`,`pwd`,`reg_time`) VALUES (?,?,?) ");
@@ -51,17 +51,12 @@ class UserModel
             return false;
         }
         $userInfo = $ret[0];
-        if ($this->_password_generate($pwd) != $userInfo['pwd']) {
+        if (Common_Password::pwdEncode($pwd) != $userInfo['pwd']) {
             $this->errno = -1004;
             $this->errmsg = "密码错误";
             return false;
         }
         return intval($userInfo[1]);
-    }
-
-    private function _password_generate($pwd)
-    {
-        return md5('salt' . $pwd);
     }
 
 }
