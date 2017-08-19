@@ -28,8 +28,13 @@ class UserController extends Yaf_Controller_Abstract
             return false;
         }
 
-        $model = new UserModel();
-        $uid = $model->login($uname, $pwd);
+        try {
+            $model = new UserModel();
+            $uid = $model->login($uname, $pwd);
+        } catch (Exception $e) {
+            echo json_encode(Err_Map::get(1000));
+            return false;
+        }
         if ($uid) {
             //种session
             session_start();
@@ -58,12 +63,16 @@ class UserController extends Yaf_Controller_Abstract
             return false;
         }
 
-        //调用Model
-        $user = new UserModel();
-        if ($user->register(trim($uname), trim($pwd))) {
-            echo Common_Request::responce(0, "", array("name" => $uname));
-        } else {
-            echo Common_Request::responce($user->errno, $user->errmsg);
+        try {
+            //调用Model
+            $user = new UserModel();
+            if ($user->register(trim($uname), trim($pwd))) {
+                echo Common_Request::responce(0, "", array("name" => $uname));
+            } else {
+                echo Common_Request::responce($user->errno, $user->errmsg);
+            }
+        } catch (Exception $e) {
+            echo json_encode(Err_Map::get(1000));
         }
         return false;
     }
