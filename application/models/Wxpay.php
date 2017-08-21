@@ -6,7 +6,7 @@ include_once($wxpayLibPath . 'WxPay.Notify.php');
 include_once($wxpayLibPath . 'WxPay.NativePay.php');
 include_once($wxpayLibPath . 'WxPay.Data.php');
 
-class WxpayModel
+class WxpayModel extends WxPayNotify
 {
     public $errno = 0;
     public $errmsg = "";
@@ -119,6 +119,31 @@ class WxpayModel
         $url = $result["code_url"];
         return $url;
 
+    }
+
+    public function callback()
+    {
+        /**
+         * 订单成功，更新账单
+         * TODO 因为SK没有，没法与微信支付的服务端做Response确认，只能单方面记账
+         */
+        $xmlData = file_get_contents("php://input");
+        if (substr_count($xmlData, "<result_code><![CDATA[SUCCESS]]></result_code>") == 1 &&
+            substr_count($xmlData, "<return_code><![CDATA[SUCCESS]]></return_code>") == 1) {
+            preg_match('/<attach>(.*)\[(\d+)\](.*)<\/attach>/i', $xmlData, $match);
+            if (isset($match[2]) && is_numeric($match[2])) {
+                $billId = intval($match[2]);
+            }
+            preg_match('/<transaction_id>(.*)\[(\d+)\](.*)<\/transaction_id>/i', $xmlData, $match);
+            if (isset($match[2]) && is_numeric($match[2])) {
+                $transactionId = intval($match[2]);
+            }
+        }
+
+        if (isset($billId) && isset($transactionId)) {
+            $query = $this->_db->prepare("update `bill` set `transaction`=?,`ptime`=?,`status`='paid' WHERE `id`=? ");
+            $query->execute([$transactionId, date('Y-m-d H:i:s'), $billId]);
+        }
     }
 
 }

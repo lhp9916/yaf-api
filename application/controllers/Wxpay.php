@@ -59,7 +59,10 @@ class WxpayController extends Yaf_Controller_Abstract
     //微信支付成功回调接口
     public function callbackAction()
     {
-
+        $model = new WxpayModel();
+        $model->callback();
+        echo Common_Request::responce(0, "");
+        return false;
     }
 
 }
