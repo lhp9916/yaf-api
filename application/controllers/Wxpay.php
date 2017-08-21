@@ -4,6 +4,10 @@
  * @name WxpayController
  * @desc 微信支付功能封装
  */
+
+$qrcodeLibPath = dirname(__FILE__) . '/../library/ThirdParty/Qrcode/';
+include_once($qrcodeLibPath . 'Qrcode.php');
+
 class WxpayController extends Yaf_Controller_Abstract
 {
     //创建订单
@@ -36,7 +40,20 @@ class WxpayController extends Yaf_Controller_Abstract
     //生成支付二维码
     public function qrcodeAction()
     {
+        $billId = Common_Request::postRequest("billid", "");
+        if (!$billId) {
+            echo Common_Request::responce(-6008, "请传递正确的订单id");
+            return false;
+        }
 
+        $model = new WxpayModel();
+        if ($data = $model->qrcode($billId)) {
+            //输出二维码
+            QRcode::png($data);
+        } else {
+            echo Common_Request::responce($model->errno, $model->errmsg);
+        }
+        return false;
     }
 
     //微信支付成功回调接口

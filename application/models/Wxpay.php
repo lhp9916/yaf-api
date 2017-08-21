@@ -1,5 +1,11 @@
 <?php
 
+$wxpayLibPath = dirname(__FILE__) . '/../library/ThirdParty/Wxpay/';
+include_once($wxpayLibPath . 'WxPay.Api.php');
+include_once($wxpayLibPath . 'WxPay.Notify.php');
+include_once($wxpayLibPath . 'WxPay.NativePay.php');
+include_once($wxpayLibPath . 'WxPay.Data.php');
+
 class WxpayModel
 {
     public $errno = 0;
@@ -66,6 +72,53 @@ class WxpayModel
             $this->errmsg = "数据库发生错误";
             return false;
         }
+    }
+
+    public function qrcode($billId)
+    {
+        //找订单
+        $query = $this->_db->prepare("select * from `bill` WHERE `id`=? ");
+        $query->execute([$billId]);
+        $ret = $query->fetchAll();
+        if (!$ret || count($ret) != 1) {
+            $this->errno = -6009;
+            $this->errmsg = "找不到账单信息";
+            return false;
+        }
+        $bill = $ret[0];
+
+        //找商品
+        $query = $this->_db->prepare("select * from `item` WHERE `id`=? ");
+        $query->execute([$bill['itemid']]);
+        $ret = $query->fetchAll();
+        if (!$ret || count($ret) != 1) {
+            $this->errno = -6010;
+            $this->errmsg = "找不到这件商品";
+            return false;
+        }
+        $item = $ret[0];
+
+        /**
+         * 调用微信支付lib，生成账单二维码
+         */
+        $input = new WxPayUnifiedOrder();
+        $input->SetBody($item['name']);
+        $input->SetAttach($billId);
+        $input->SetOut_trade_no(WxPayConfig::MCHID . date("YmdHis"));
+        $input->SetTotal_fee($bill['price']);
+        $input->SetTime_start(date("YmdHis"));
+        $input->SetTime_expire(date("YmdHis", time() + 86400 * 3));
+        $input->SetGoods_tag($item['name']);
+        //回调接口
+        $input->SetNotify_url("http://192.168.1.3/wxpay/callback");
+        $input->SetTrade_type("NATIVE");
+        $input->SetProduct_id($billId);
+
+        $notify = new NativePay();
+        $result = $notify->GetPayUrl($input);
+        $url = $result["code_url"];
+        return $url;
+
     }
 
 }
